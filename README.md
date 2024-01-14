@@ -8,7 +8,21 @@ This program is provided under the GNU Affero General Public License v3.0 (AGPLv
 
 ## Usage
 
-To use `getlaserfile`, you need to deploy it alongside the Gitea container in your Kubernetes cluster. The program exposes an endpoint that can be used to download specific files from a private Gitea repository.
+To use `getlaserfile`, you need to deploy it alongside the Gitea container in your Kubernetes cluster. The program exposes an endpoint that can be used to download specific files from a private Gitea repository.  
+add a config.yaml:  
+```yaml
+paths:
+  - repolocation: "/repo1"
+    url: "/url1"
+    path: "/path1"
+  - repolocation: "/repo2"
+    url: "/url2"
+    path: "/path2"
+```
+and run it:  
+```sh
+getlaserfile --config=config.yaml --port=80
+```  
 
 ## Deployment
 

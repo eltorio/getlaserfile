@@ -24,14 +24,28 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+
+	"gopkg.in/yaml.v2"
 )
+
+type Path struct {
+	RepoLocation string `yaml:"repolocation"`
+	Url          string `yaml:"url"`
+	Path         string `yaml:"path"`
+}
+
+type Config struct {
+	Paths []Path `yaml:"paths"`
+}
 
 func isInteger(s string) bool {
 	_, err := strconv.Atoi(s)
@@ -101,25 +115,48 @@ func handleBinary(w http.ResponseWriter, r *http.Request, repoLocation *string, 
 
 func main() {
 	listenPort := flag.String("port", "80", "The listening port")
-	repoLocation := flag.String("repolocation", "", "The location of the repository")
-	ihmLocation := flag.String("ihmlocation", "builds/IHM/ihm.exe", "The location of the ihm binay")
-	startupLocation := flag.String("startuplocation", "builds/sbRIO-9651/home/lvuser/natinst/bin/startup.rtexe", "The location of the startup.rtexe binary")
+	configYaml := flag.String("config", "", "The location of the config file")
 
 	flag.Parse()
 
+	// Read config file
+	data, err := os.ReadFile("config.yaml")
+	if err != nil {
+		log.Fatalf("error: %v", err)
+	}
+
+	// Unmarshal YAML data into Config struct
+	var config Config
+	err = yaml.Unmarshal(data, &config)
+	if err != nil {
+		log.Fatalf("error: %v", err)
+	}
+
 	// Check if repoLocation and commitHash are provided
-	if *repoLocation == "" || !isInteger(*listenPort) {
-		fmt.Println("Error: Not enough arguments. Usage: ./getlaserfile --repolocation=<repoLocation> --port=<integer>")
+	if *configYaml == "" || !isInteger(*listenPort) {
+		fmt.Println("Error: Not enough arguments. Usage: ./getlaserfile --config=<config.yaml> --port=<integer>")
+		fmt.Println("\t config.yaml sample:")
+		fmt.Println(`paths:
+  - repolocation: "/repo1"
+    url: "/url1"
+    path: "/path1"
+  - repolocation: "/repo2"
+    url: "/url2"
+    path: "/path2"`)
 		return
 	}
 
-	http.HandleFunc("/ihm.exe", func(w http.ResponseWriter, r *http.Request) {
-		handleBinary(w, r, repoLocation, ihmLocation)
-	})
+	for _, path := range config.Paths {
+		if path.Path == "" || path.RepoLocation == "" || path.Url == "" {
+			log.Fatalf("error: malformed config")
+		} else {
+			log.Printf("info: serve %s corresponding to repo %s and file %s", path.Url, path.RepoLocation, path.Path)
+			http.HandleFunc(path.Url, func(w http.ResponseWriter, r *http.Request) {
+				handleBinary(w, r, &path.RepoLocation, &path.Path)
+			})
+		}
 
-	http.HandleFunc("/startup.rtexe", func(w http.ResponseWriter, r *http.Request) {
-		handleBinary(w, r, repoLocation, startupLocation)
-	})
+	}
 
 	http.HandleFunc("/ready", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "OK")
