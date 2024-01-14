@@ -1,3 +1,23 @@
+/*
+ * getlaserfile
+ * Copyright (C) 2024 Ronan LE MEILLAT
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ * Developed for ISMO Group (https://www.ismo-group.co.uk)
+ */
+
 package main
 
 import (
@@ -99,6 +119,10 @@ func main() {
 
 	http.HandleFunc("/startup.rtexe", func(w http.ResponseWriter, r *http.Request) {
 		handleBinary(w, r, repoLocation, startupLocation)
+	})
+
+	http.HandleFunc("/ready", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, "OK")
 	})
 
 	http.ListenAndServe(":"+*listenPort, nil)
