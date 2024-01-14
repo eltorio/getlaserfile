@@ -152,6 +152,7 @@ func main() {
 		} else {
 			log.Printf("info: serve %s corresponding to repo %s and file %s", path.Url, path.RepoLocation, path.Path)
 			http.HandleFunc(path.Url, func(w http.ResponseWriter, r *http.Request) {
+				log.Printf("info: request %s corresponding to repo %s and file %s", path.Url, path.RepoLocation, path.Path)
 				handleBinary(w, r, &path.RepoLocation, &path.Path)
 			})
 		}
