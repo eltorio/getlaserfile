@@ -120,7 +120,7 @@ func main() {
 	flag.Parse()
 
 	// Read config file
-	data, err := os.ReadFile("config.yaml")
+	data, err := os.ReadFile(*configYaml)
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
