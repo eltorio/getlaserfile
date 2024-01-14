@@ -83,19 +83,21 @@ func GetFileAtCommit(repoPath string, commitHash string, filePath string) (objec
 	return f.Blob, nil
 }
 
-func handleBinary(w http.ResponseWriter, r *http.Request, repoLocation *string, path *string) {
+func handleBinary(w http.ResponseWriter, r *http.Request, repoLocation string, path string) {
 	hash := r.URL.Query().Get("hash")
 
 	// Check if hash is a valid hash
 	match, _ := regexp.MatchString("^[a-f0-9]{40}$", hash)
 	if !match {
 		http.Error(w, "Invalid commit hash. It should contain only numbers and characters from a to f and be exactly 40 characters long.", http.StatusBadRequest)
+		log.Printf("Error: Invalid commit hash %s. It should contain only numbers and characters from a to f and be exactly 40 characters long.", hash)
 		return
 	}
 
-	content, err := GetFileAtCommit(*repoLocation, hash, *path)
+	content, err := GetFileAtCommit(repoLocation, hash, path)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error: %v", err), http.StatusInternalServerError)
+		log.Printf("Error: %v", err)
 		return
 	}
 
@@ -103,8 +105,10 @@ func handleBinary(w http.ResponseWriter, r *http.Request, repoLocation *string, 
 	reader, err := content.Reader()
 	if err != nil {
 		http.Error(w, "Error reading blob", http.StatusInternalServerError)
+		log.Printf("Error: reading blob %v", err)
 		return
 	}
+	log.Printf("info: using hash %s", hash)
 	defer reader.Close()
 
 	// Copy the blob content to the response body
@@ -151,9 +155,12 @@ func main() {
 			log.Fatalf("error: malformed config")
 		} else {
 			log.Printf("info: serve %s corresponding to repo %s and file %s", path.Url, path.RepoLocation, path.Path)
+			url := path.Url
+			repo := path.RepoLocation
+			file := path.Path
 			http.HandleFunc(path.Url, func(w http.ResponseWriter, r *http.Request) {
-				log.Printf("info: request %s corresponding to repo %s and file %s", path.Url, path.RepoLocation, path.Path)
-				handleBinary(w, r, &path.RepoLocation, &path.Path)
+				log.Printf("info: request %s corresponding to repo %s and file %s", url, repo, file)
+				handleBinary(w, r, repo, file)
 			})
 		}
 
