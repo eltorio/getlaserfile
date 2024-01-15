@@ -34,6 +34,7 @@ type Config struct {
 	} `yaml:"paths"`
 }
 
+// ReadConfig reads the config file and returns a Config struct
 func ReadConfig(configYaml string) (Config, error) {
 	var config Config
 

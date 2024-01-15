@@ -32,6 +32,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
+// GetFileAtCommit returns the content of a file at a given commit hash
 func GetFileAtCommit(repoPath string, commitHash string, filePath string) (object.Blob, error) {
 	// Open the repository
 	r, err := git.PlainOpen(repoPath)
@@ -63,6 +64,7 @@ func GetFileAtCommit(repoPath string, commitHash string, filePath string) (objec
 	return f.Blob, nil
 }
 
+// HandleBinary handles the request for a binary file
 func HandleBinary(w http.ResponseWriter, r *http.Request, repoLocation, path string) {
 	hash := r.URL.Query().Get("hash")
 
@@ -74,6 +76,7 @@ func HandleBinary(w http.ResponseWriter, r *http.Request, repoLocation, path str
 		return
 	}
 
+	// Get the blob content
 	content, err := GetFileAtCommit(repoLocation, hash, path)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error: %v", err), http.StatusInternalServerError)

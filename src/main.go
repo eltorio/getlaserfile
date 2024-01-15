@@ -28,12 +28,14 @@ import (
 	"strconv"
 )
 
+// isInteger checks if a string is an integer
 func isInteger(s string) bool {
 	_, err := strconv.Atoi(s)
 	return err == nil
 }
 
 func main() {
+	help := flag.Bool("help", false, "Show help")
 	listenPort := flag.String("port", "80", "The listening port")
 	configYaml := flag.String("config", "", "The location of the config file")
 
@@ -44,9 +46,10 @@ func main() {
 		log.Fatalf("error: %v", err)
 	}
 
-	// Check if repoLocation and commitHash are provided
-	if *configYaml == "" || !isInteger(*listenPort) {
+	// Check if the config file is valid and the port is an integer
+	if *configYaml == "" || !isInteger(*listenPort) || *help {
 		fmt.Println("Error: Not enough arguments. Usage: ./getlaserfile --config=<config.yaml> --port=<integer>")
+		flag.Usage()
 		fmt.Println("\t config.yaml sample:")
 		fmt.Println(`paths:
   - repolocation: "/repo1"
@@ -58,6 +61,7 @@ func main() {
 		return
 	}
 
+	// Serve the files for each path
 	for _, path := range config.Paths {
 		if path.Path == "" || path.RepoLocation == "" || path.Url == "" {
 			log.Fatalf("error: malformed config")
@@ -74,6 +78,7 @@ func main() {
 
 	}
 
+	// Serve the health and readiness endpoints
 	http.HandleFunc("/ready", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "OK")
 	})
